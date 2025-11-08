@@ -119,8 +119,8 @@ def create_hospital_kpi_ontology():
         
 
         class description(DataProperty, FunctionalProperty):
-        domain = [KPI]
-        range = [str]
+            domain = [KPI]
+            range = [str]
 
         
         class actual_value(DataProperty):
@@ -161,4 +161,5 @@ def create_hospital_kpi_ontology():
             range = [int]
     
     return onto
+
 
