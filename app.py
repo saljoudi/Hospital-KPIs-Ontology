@@ -2,7 +2,11 @@ from flask import Flask, render_template, jsonify
 from ontology.data import load_kpi_data
 from api.routes import init_api
 
-app = Flask(__name__)
+
+app = Flask(__name__,
+            template_folder='templates',  # Explicit paths
+            static_folder='static',
+            static_url_path='/static')
 # server = app  # for Gunicorn compatibility
 
 
@@ -32,4 +36,5 @@ if __name__ == '__main__':
     port = int(__import__('os').environ.get('PORT', 10000))
     debug = __import__('os').environ.get('FLASK_ENV') == 'development'
     app.run(host='0.0.0.0', port=port, debug=debug)
+
 
