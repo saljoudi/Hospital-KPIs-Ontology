@@ -101,7 +101,7 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script>
-    // Auto-load data when page opens
+    // Load dashboard when ready
     document.addEventListener('DOMContentLoaded', function() {
         Promise.all([loadKPIs(), loadSummary()])
             .then(() => {
@@ -110,9 +110,64 @@
             })
             .catch(error => {
                 console.error('Failed to load dashboard:', error);
-                document.getElementById('loading-message').innerHTML = 
+                document.getElementById('loading-message').innerHTML =
                     `<div class="alert alert-danger">Error loading dashboard: ${error.message}</div>`;
             });
     });
+
+    // === Step 3: Reasoning Integration ===
+    async function runReasoning() {
+        try {
+            // Show processing spinner or update log
+            const insights = document.getElementById('insights-panel');
+            insights.innerHTML = `<div class="text-center py-2">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Running reasoning...</span>
+                </div>
+                <p class="mt-2 text-muted">Reasoning in progress...</p>
+            </div>`;
+
+            const response = await fetch('/api/reasoning');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const data = await response.json();
+
+            // Populate alerts
+            const alertsPanel = document.getElementById('alerts-panel');
+            alertsPanel.innerHTML = '';
+            if (data.alerts && data.alerts.length) {
+                data.alerts.forEach(a => {
+                    alertsPanel.innerHTML += `<div class="alert alert-warning mb-2"><strong>${a.kpi}</strong>: ${a.message}</div>`;
+                });
+            } else {
+                alertsPanel.innerHTML = '<p class="text-muted">No active alerts.</p>';
+            }
+
+            // Populate recommendations
+            const recommendationsPanel = document.getElementById('recommendations-panel');
+            recommendationsPanel.innerHTML = '';
+            if (data.recommendations && data.recommendations.length) {
+                data.recommendations.forEach(r => {
+                    recommendationsPanel.innerHTML += `<div class="alert alert-info mb-2"><i class="bi bi-lightbulb"></i> ${r}</div>`;
+                });
+            } else {
+                recommendationsPanel.innerHTML = '<p class="text-muted">No recommendations available.</p>';
+            }
+
+            // Populate reasoning log
+            insights.innerHTML = '';
+            if (data.log && data.log.length) {
+                data.log.forEach(line => {
+                    insights.innerHTML += `<div><small>${line}</small></div>`;
+                });
+            } else {
+                insights.innerHTML = '<small class="text-muted">No reasoning log generated.</small>';
+            }
+        } catch (error) {
+            console.error('Reasoning failed:', error);
+            document.getElementById('insights-panel').innerHTML =
+                `<div class="alert alert-danger">Error running reasoning: ${error.message}</div>`;
+        }
+    }
 </script>
 {% endblock %}
