@@ -3,6 +3,8 @@ from ontology.data import load_kpi_data
 from api.routes import init_api
 
 app = Flask(__name__)
+# server = app  # for Gunicorn compatibility
+
 
 # DEMO: Hardcoded secret key for demo purposes only
 # In production, use environment variable: os.environ.get('SECRET_KEY')
@@ -30,3 +32,4 @@ if __name__ == '__main__':
     port = int(__import__('os').environ.get('PORT', 10000))
     debug = __import__('os').environ.get('FLASK_ENV') == 'development'
     app.run(host='0.0.0.0', port=port, debug=debug)
+
