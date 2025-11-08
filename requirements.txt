@@ -2,7 +2,7 @@
 setuptools
 wheel
 build
-
+rdflib 
 # Application dependencies
 Flask
 owlready2
@@ -12,3 +12,4 @@ matplotlib
 seaborn
 gunicorn
 python-dotenv
+
