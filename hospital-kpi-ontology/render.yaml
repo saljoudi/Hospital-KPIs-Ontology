@@ -2,14 +2,12 @@ services:
   - type: web
     name: hospital-kpi-demo
     env: python
-    rootDir: hospital-kpi-ontology  # <-- Add this line
+    rootDir: hospital-kpi-ontology
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     plan: starter
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: 3.13.4  # Match Render's actual version
       - key: FLASK_ENV
         value: production
-        generateValue: true
-
