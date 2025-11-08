@@ -2,6 +2,8 @@ services:
   - type: web
     name: hospital-kpi-demo
     env: python
+    python:
+      version: 3.11.0  # <-- This is the correct way
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     plan: starter  # Free tier
@@ -10,3 +12,4 @@ services:
         value: 3.11.0
       - key: FLASK_ENV
         value: production
+
