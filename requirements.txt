@@ -1,8 +1,14 @@
-Flask==2.3.3
-owlready2==0.45
-pandas==2.0.3
-numpy==1.24.3
-matplotlib==3.7.2
-seaborn==0.12.2
-gunicorn==21.2.0
-python-dotenv==1.0.0
+# Build tools (required for Python 3.13)
+setuptools
+wheel
+build
+
+# Application dependencies
+Flask
+owlready2
+pandas
+numpy
+matplotlib
+seaborn
+gunicorn
+python-dotenv
