@@ -299,4 +299,118 @@ function populateAlerts(alerts) {
     
     if (!alerts || alerts.length === 0) {
         panel.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle"></i> No alerts detected - all systems performing within normal parameters</div>';
-       
+        return;
+    }
+    
+    panel.innerHTML = alerts.map(alert => {
+        const level = alert.level?.toLowerCase() || 'info';
+        const alertClass = level === 'critical' ? 'danger' : 
+                          level === 'warning' ? 'warning' : 'info';
+        
+        return `
+            <div class="alert alert-${alertClass} alert-dismissible fade show mb-2" role="alert">
+                <strong><i class="bi bi-exclamation-triangle"></i> ${alert.type}</strong><br>
+                ${alert.message}
+                <br><small class="text-muted">Detected: ${new Date(alert.timestamp).toLocaleString()}</small>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+    }).join('');
+}
+
+function populateRecommendations(recommendations) {
+    console.log('💡 Populating recommendations:', recommendations.length);
+    const panel = document.getElementById('recommendations-panel');
+    
+    if (!panel) return;
+    
+    if (!recommendations || recommendations.length === 0) {
+        panel.innerHTML = '<p class="text-muted"><i class="bi bi-info-circle"></i> No recommendations at this time</p>';
+        return;
+    }
+    
+    panel.innerHTML = recommendations.map(rec => {
+        const priorityClass = rec.priority?.includes('CRITICAL') ? 'danger' : 
+                             rec.priority?.includes('HIGH') ? 'warning' : 'info';
+        
+        return `
+            <div class="border-start border-4 border-${priorityClass} ps-3 mb-3">
+                <span class="badge bg-${priorityClass}">${rec.priority || 'P2-MEDIUM'}</span>
+                <p class="mt-2 mb-1"><strong>Action:</strong> ${rec.action}</p>
+                <p class="mb-1"><strong>Owner:</strong> ${rec.owner || 'Not assigned'}</p>
+                <small class="text-muted"><strong>Timeline:</strong> ${rec.timeline || 'Not specified'}</small>
+            </div>
+        `;
+    }).join('');
+}
+
+function populateInsights(insights) {
+    console.log('📝 Populating insights:', insights.length);
+    const panel = document.getElementById('insights-panel');
+    
+    if (!panel) return;
+    
+    if (!insights || insights.length === 0) {
+        panel.innerHTML = '<small class="text-muted"><i class="bi bi-search"></i> Run reasoning to see detailed analysis...</small>';
+        return;
+    }
+    
+    panel.innerHTML = `
+        <div class="text-muted">
+            ${insights.map(insight => `<div class="mb-2">• ${insight}</div>`).join('')}
+        </div>
+    `;
+}
+
+// =============================================================================
+// UI UTILITY FUNCTIONS
+// =============================================================================
+function showTemporaryBanner(message, type = 'info') {
+    const banner = document.createElement('div');
+    banner.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-2`;
+    banner.style.zIndex = '1050';
+    banner.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(banner);
+    
+    setTimeout(() => {
+        banner.remove();
+    }, 5000);
+}
+
+function hideLoadingMessage() {
+    const loader = document.getElementById('loading-message');
+    if (loader) loader.style.display = 'none';
+}
+
+function showDashboardContent() {
+    const content = document.getElementById('dashboard-content');
+    if (content) content.style.display = 'block';
+}
+
+function showError(elementId, message) {
+    const elem = document.getElementById(elementId);
+    if (elem) {
+        elem.innerHTML = `<tr><td colspan="6" class="text-danger text-center py-3">${message}</td></tr>`;
+    }
+}
+
+function showFatalError(message) {
+    const content = document.getElementById('dashboard-content');
+    if (content) {
+        content.innerHTML = `
+            <div class="alert alert-danger text-center">
+                <h4><i class="bi bi-exclamation-octagon"></i> Dashboard Error</h4>
+                <p>${message}</p>
+                <button class="btn btn-primary" onclick="location.reload()">
+                    <i class="bi bi-arrow-clockwise"></i> Reload Page
+                </button>
+            </div>
+        `;
+        content.style.display = 'block';
+    }
+    hideLoadingMessage();
+}
