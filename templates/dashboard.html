@@ -1,31 +1,118 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="alert alert-info" id="loading-message">
-    <i class="bi bi-hourglass-split"></i> Loading KPI data...
-</div>
+<div class="container-fluid mt-4">
+    <!-- Loading State -->
+    <div id="loading-message" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading KPI data...</p>
+    </div>
 
-<div class="row mb-4" id="dashboard-content" style="display: none;">
-    <!-- Your existing dashboard HTML here -->
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Executive Summary</h5>
-                <div class="row text-center" id="summary-cards">
-                    <!-- Populated by JavaScript -->
+    <!-- Dashboard Content (Hidden Initially) -->
+    <div id="dashboard-content" style="display: none;">
+        <!-- Executive Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-graph-up"></i> Executive Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center" id="summary-cards">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="row">
+            <!-- KPI Table -->
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-table"></i> KPI Performance</h5>
+                        <button class="btn btn-sm btn-primary" onclick="runReasoning()">
+                            <i class="bi bi-gear"></i> Run Reasoning Engine
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>KPI Name</th>
+                                        <th>Department</th>
+                                        <th>Actual</th>
+                                        <th>Target</th>
+                                        <th>Status</th>
+                                        <th>Trend</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="kpi-table">
+                                    <!-- Populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insights Panel -->
+            <div class="col-lg-4">
+                <!-- Active Alerts -->
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Active Alerts</h6>
+                    </div>
+                    <div class="card-body" id="alerts-panel">
+                        <p class="text-muted">Click "Run Reasoning" to analyze KPIs</p>
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0"><i class="bi bi-lightbulb"></i> Recommendations</h6>
+                    </div>
+                    <div class="card-body" id="recommendations-panel">
+                        <p class="text-muted">Insights will appear here after reasoning</p>
+                    </div>
+                </div>
+
+                <!-- Reasoning Insights -->
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h6 class="mb-0"><i class="bi bi-gear"></i> Reasoning Log</h6>
+                    </div>
+                    <div class="card-body" id="insights-panel" style="max-height: 200px; overflow-y: auto;">
+                        <small class="text-muted">Run reasoning to see detailed analysis...</small>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script>
-// Hide loading message when data loads
-document.addEventListener('DOMContentLoaded', function() {
-    loadKPIs().then(() => {
-        document.getElementById('loading-message').style.display = 'none';
-        document.getElementById('dashboard-content').style.display = 'block';
+    // Auto-load data when page opens
+    document.addEventListener('DOMContentLoaded', function() {
+        Promise.all([loadKPIs(), loadSummary()])
+            .then(() => {
+                document.getElementById('loading-message').style.display = 'none';
+                document.getElementById('dashboard-content').style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Failed to load dashboard:', error);
+                document.getElementById('loading-message').innerHTML = 
+                    `<div class="alert alert-danger">Error loading dashboard: ${error.message}</div>`;
+            });
     });
-});
 </script>
 {% endblock %}
