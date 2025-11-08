@@ -21,27 +21,27 @@ def load_kpi_data():
 
         # ==================== DEPARTMENTS ====================
         ed = onto.EmergencyDepartment("ED_Department")
-        ed.dept_name = ["Emergency Department"]
+        ed.dept_name = "Emergency Department"
         ed.bed_capacity = [45]
         ed.staff_count = [85]
 
         icu = onto.ICU("ICU_Department")
-        icu.dept_name = ["Intensive Care Unit"]
+        icu.dept_name = "Intensive Care Unit"
         icu.bed_capacity = [24]
         icu.staff_count = [60]
 
         surgery = onto.Surgery("Surgery_Department")
-        surgery.dept_name = ["Surgery Department"]
+        surgery.dept_name = "Surgery Department"
         surgery.bed_capacity = [30]
         surgery.staff_count = [50]
 
         admin = onto.HospitalAdministration("Admin_Department")
-        admin.dept_name = ["Hospital Administration"]
+        admin.dept_name = "Hospital Administration"
 
         # ==================== EMERGENCY DEPARTMENT KPIs ====================
         ed_wait = onto.KPI("ED_Wait_Time")
-        ed_wait.kpi_name = ["Door-to-Doctor Time"]
-        ed_wait.description = ["Average time from patient arrival to first physician contact"]
+        ed_wait.kpi_name = "Door-to-Doctor Time"
+        ed_wait.description = "Average time from patient arrival to first physician contact"
         ed_wait.actual_value = [32.5]
         ed_wait.target_value = [30.0]
         ed_wait.warning_threshold = [35.0]
@@ -54,8 +54,8 @@ def load_kpi_data():
         ed_wait.trend_direction = ["stable"]
 
         ed_lwbs = onto.KPI("ED_LWBS")
-        ed_lwbs.kpi_name = ["Left Without Being Seen Rate"]
-        ed_lwbs.description = ["Percentage of patients who left before being seen by provider"]
+        ed_lwbs.kpi_name = "Left Without Being Seen Rate"
+        ed_lwbs.description = "Percentage of patients who left before being seen by provider"
         ed_lwbs.actual_value = [3.2]
         ed_lwbs.target_value = [2.0]
         ed_lwbs.warning_threshold = [3.0]
@@ -68,8 +68,8 @@ def load_kpi_data():
         ed_lwbs.trend_direction = ["up"]
 
         ed_mortality = onto.KPI("ED_Mortality_Rate")
-        ed_mortality.kpi_name = ["ED Mortality Rate"]
-        ed_mortality.description = ["Mortality rate in emergency department"]
+        ed_mortality.kpi_name = "ED Mortality Rate"
+        ed_mortality.description = "Mortality rate in emergency department"
         ed_mortality.actual_value = [1.8]
         ed_mortality.target_value = [1.5]
         ed_mortality.warning_threshold = [2.0]
@@ -83,8 +83,8 @@ def load_kpi_data():
 
         # ==================== ICU KPIs ====================
         icu_clabsi = onto.KPI("ICU_CLABSI_Rate")
-        icu_clabsi.kpi_name = ["CLABSI Rate (per 1000 line days)"]
-        icu_clabsi.description = ["Central Line-Associated Bloodstream Infection rate"]
+        icu_clabsi.kpi_name = "CLABSI Rate (per 1000 line days)"
+        icu_clabsi.description = "Central Line-Associated Bloodstream Infection rate"
         icu_clabsi.actual_value = [0.85]
         icu_clabsi.target_value = [0.5]
         icu_clabsi.warning_threshold = [1.0]
@@ -97,8 +97,8 @@ def load_kpi_data():
         icu_clabsi.trend_direction = ["up"]
 
         icu_occupancy = onto.KPI("ICU_Occupancy_Rate")
-        icu_occupancy.kpi_name = ["ICU Bed Occupancy Rate"]
-        icu_occupancy.description = ["Percentage of ICU beds occupied"]
+        icu_occupancy.kpi_name = "ICU Bed Occupancy Rate"
+        icu_occupancy.description = "Percentage of ICU beds occupied"
         icu_occupancy.actual_value = [87.5]
         icu_occupancy.target_value = [85.0]
         icu_occupancy.warning_threshold = [90.0]
@@ -112,8 +112,8 @@ def load_kpi_data():
 
         # ==================== SURGERY KPIs ====================
         surgery_ssi = onto.KPI("Surgery_SSI_Rate")
-        surgery_ssi.kpi_name = ["Surgical Site Infection Rate"]
-        surgery_ssi.description = ["Infections within 30 days of surgery"]
+        surgery_ssi.kpi_name = "Surgical Site Infection Rate"
+        surgery_ssi.description = "Infections within 30 days of surgery"
         surgery_ssi.actual_value = [2.1]
         surgery_ssi.target_value = [2.0]
         surgery_ssi.warning_threshold = [2.5]
@@ -127,8 +127,8 @@ def load_kpi_data():
 
         # ==================== ADMINISTRATION KPIs ====================
         admin_margin = onto.KPI("Hospital_Operating_Margin")
-        admin_margin.kpi_name = ["Operating Margin"]
-        admin_margin.description = ["Revenue minus expenses divided by revenue"]
+        admin_margin.kpi_name = "Operating Margin"
+        admin_margin.description = "Revenue minus expenses divided by revenue"
         admin_margin.actual_value = [4.2]
         admin_margin.target_value = [5.0]
         admin_margin.warning_threshold = [3.0]
@@ -141,8 +141,8 @@ def load_kpi_data():
         admin_margin.trend_direction = ["down"]
 
         admin_satisfaction = onto.KPI("Patient_Satisfaction_Score")
-        admin_satisfaction.kpi_name = ["Patient Satisfaction Score"]
-        admin_satisfaction.description = ["Overall HCAHPS composite score"]
+        admin_satisfaction.kpi_name = "Patient Satisfaction Score"
+        admin_satisfaction.description = "Overall HCAHPS composite score"
         admin_satisfaction.actual_value = [82.0]
         admin_satisfaction.target_value = [85.0]
         admin_satisfaction.warning_threshold = [80.0]
@@ -155,8 +155,8 @@ def load_kpi_data():
         admin_satisfaction.trend_direction = ["stable"]
 
         admin_readmission = onto.KPI("Hospital_Readmission_Rate")
-        admin_readmission.kpi_name = ["30-Day Readmission Rate"]
-        admin_readmission.description = ["Percentage of patients readmitted within 30 days"]
+        admin_readmission.kpi_name = "30-Day Readmission Rate"
+        admin_readmission.description = "Percentage of patients readmitted within 30 days"
         admin_readmission.actual_value = [12.8]
         admin_readmission.target_value = [11.0]
         admin_readmission.warning_threshold = [13.0]
