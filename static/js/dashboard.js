@@ -1,90 +1,77 @@
-// KPI Dashboard JavaScript
+// Hospital KPI Dashboard JavaScript - Production Version
 
-// Base API URL (auto-detects production vs local)
+// =============================================================================
+// CONFIGURATION
+// =============================================================================
 const API_BASE = window.location.origin;
+let isReasoningRunning = false;
 
-// Auto-load data when page opens
+// =============================================================================
+// INITIALIZATION
+// =============================================================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Dashboard initializing...');
-    loadKPIs();
-    loadSummary();
+    console.log('🏥 Hospital KPI Dashboard initializing...');
+    console.log('API Base URL:', API_BASE);
+    
+    // Check if all required DOM elements exist
+    const requiredElements = ['kpi-table', 'summary-cards', 'alerts-panel', 'recommendations-panel', 'insights-panel'];
+    const missingElements = requiredElements.filter(id => !document.getElementById(id));
+    
+    if (missingElements.length > 0) {
+        console.error('❌ Missing DOM elements:', missingElements);
+        showFatalError(`Missing dashboard elements: ${missingElements.join(', ')}`);
+        return;
+    }
+    
+    // Load initial data
+    Promise.all([loadKPIs(), loadSummary()])
+        .then(() => {
+            console.log('✅ Initial data loaded successfully');
+            hideLoadingMessage();
+            showDashboardContent();
+        })
+        .catch(error => {
+            console.error('❌ Failed to load initial data:', error);
+            showFatalError(`Failed to load dashboard: ${error.message}`);
+        });
 });
 
-// Load KPI data
+// =============================================================================
+// DATA LOADING FUNCTIONS
+// =============================================================================
 async function loadKPIs() {
-    console.log('📊 Loading KPIs from:', `${API_BASE}/api/kpis`);
+    console.log('📊 Loading KPIs...');
+    const startTime = performance.now();
+    
     try {
         const response = await fetch(`${API_BASE}/api/kpis`);
+        
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         const kpis = await response.json();
-        console.log('✅ Received', kpis.length, 'KPIs');
-        populateKPITable(kpis);
+        const endTime = performance.now();
         
-        // Hide loading, show content
-        document.getElementById('loading-message').style.display = 'none';
-        document.getElementById('dashboard-content').style.display = 'block';
+        console.log(`✅ Loaded ${kpis.length} KPIs in ${(endTime - startTime).toFixed(2)}ms`);
+        
+        if (kpis.length === 0) {
+            showError('kpi-table', 'No KPI data available');
+            return;
+        }
+        
+        populateKPITable(kpis);
         
     } catch (error) {
         console.error('❌ Error loading KPIs:', error);
         showError('kpi-table', `Failed to load KPIs: ${error.message}`);
+        throw error; // Re-throw to catch in initialization
     }
 }
 
-// Populate KPI table
-function populateKPITable(kpis) {
-    const tbody = document.querySelector('#kpi-table');
-    if (!tbody) {
-        console.error('❌ KPI table element not found');
-        return;
-    }
-    
-    tbody.innerHTML = ''; // Clear existing
-    
-    if (kpis.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No KPI data available</td></tr>';
-        return;
-    }
-    
-    kpis.forEach(kpi => {
-        const row = document.createElement('tr');
-        row.classList.add('card-hover');
-        
-        // Calculate performance ratio
-        const ratio = ((kpi.actual / kpi.target) * 100).toFixed(1);
-        
-        // Status badge
-        const statusBadge = `<span class="badge status-${kpi.status}">${kpi.status.toUpperCase()}</span>`;
-        
-        // Trend indicator
-        const trendIcon = {
-            'up': '📈',
-            'down': '📉',
-            'stable': '➡️'
-        }[kpi.trend] || '➡️';
-        
-        row.innerHTML = `
-            <td><strong>${kpi.name}</strong></td>
-            <td>${kpi.department}</td>
-            <td>${kpi.actual} ${kpi.unit || ''}</td>
-            <td>${kpi.target} ${kpi.unit || ''}</td>
-            <td>${statusBadge}</td>
-            <td>${trendIcon} ${kpi.trend}</td>
-        `;
-        
-        // Add click handler for detail view
-        row.style.cursor = 'pointer';
-        row.onclick = () => window.location.href = `/api/kpi/${kpi.id}`;
-        
-        tbody.appendChild(row);
-    });
-}
-
-// Load summary cards
 async function loadSummary() {
     console.log('📈 Loading summary data...');
+    
     try {
         const [kpisResponse, deptResponse] = await Promise.all([
             fetch(`${API_BASE}/api/kpis`),
@@ -92,155 +79,224 @@ async function loadSummary() {
         ]);
         
         if (!kpisResponse.ok || !deptResponse.ok) {
-            throw new Error('Failed to load summary data');
+            throw new Error('One or more summary endpoints failed');
         }
         
         const kpis = await kpisResponse.json();
         const departments = await deptResponse.json();
         
+        console.log(`✅ Summary: ${kpis.length} KPIs, ${Object.keys(departments).length} departments`);
+        
         populateSummaryCards(kpis, departments);
         
     } catch (error) {
         console.error('❌ Error loading summary:', error);
+        showError('summary-cards', `Failed to load summary: ${error.message}`);
+        throw error;
     }
 }
 
-// Populate summary cards
-function populateSummaryCards(kpis, departments) {
-    const container = document.getElementById('summary-cards');
-    if (!container) return;
+// =============================================================================
+// UI POPULATION FUNCTIONS
+// =============================================================================
+function populateKPITable(kpis) {
+    console.log('🎨 Populating KPI table...');
+    const tbody = document.getElementById('kpi-table');
     
+    if (!tbody) {
+        console.error('❌ KPI table tbody not found');
+        return;
+    }
+    
+    // Clear existing content
+    tbody.innerHTML = '';
+    
+    // Sort KPIs by weight (most important first)
+    kpis.sort((a, b) => (b.weight || 0) - (a.weight || 0));
+    
+    kpis.forEach((kpi, index) => {
+        const row = document.createElement('tr');
+        row.className = 'card-hover';
+        row.style.cursor = 'pointer';
+        
+        // Status badge
+        const statusClass = kpi.status || 'unknown';
+        const statusBadge = `<span class="badge status-${statusClass}">${statusClass.toUpperCase()}</span>`;
+        
+        // Trend icon
+        const trendIcon = {
+            'up': '📈',
+            'down': '📉',
+            'stable': '➡️'
+        }[kpi.trend] || '➡️';
+        
+        // Performance ratio
+        const ratio = kpi.target > 0 ? ((kpi.actual / kpi.target) * 100).toFixed(1) : 'N/A';
+        
+        row.innerHTML = `
+            <td>
+                <strong>${kpi.name || 'Unnamed KPI'}</strong><br>
+                <small class="text-muted">${kpi.department || 'Unknown Dept'}</small>
+            </td>
+            <td>${kpi.category || 'Unknown'}</td>
+            <td>
+                ${kpi.actual} ${kpi.unit || ''}<br>
+                <small class="text-muted">${ratio}% of target</small>
+            </td>
+            <td>${kpi.target} ${kpi.unit || ''}</td>
+            <td>${statusBadge}</td>
+            <td>${trendIcon} ${kpi.trend || 'unknown'}</td>
+        `;
+        
+        // Add click handler for detail view
+        row.onclick = () => {
+            console.log('🔍 Opening details for:', kpi.id);
+            window.location.href = `/api/kpi/${kpi.id}`;
+        };
+        
+        tbody.appendChild(row);
+    });
+    
+    console.log(`✅ Populated ${kpis.length} rows in KPI table`);
+}
+
+function populateSummaryCards(kpis, departments) {
+    console.log('📊 Populating summary cards...');
+    const container = document.getElementById('summary-cards');
+    
+    if (!container) {
+        console.error('❌ Summary cards container not found');
+        return;
+    }
+    
+    // Calculate metrics
     const totalKPIs = kpis.length;
     const criticalKPIs = kpis.filter(k => k.status === 'critical').length;
+    const warningKPIs = kpis.filter(k => k.status === 'warning').length;
     const goodKPIs = kpis.filter(k => k.status === 'good').length;
-    const avgHealth = Math.round((goodKPIs / totalKPIs) * 100);
+    const healthScore = totalKPIs > 0 ? Math.round((goodKPIs / totalKPIs) * 100) : 0;
+    
+    // Determine overall health color
+    const healthColor = criticalKPIs > 3 ? 'critical' : 
+                       warningKPIs > 5 ? 'warning' : 'good';
     
     container.innerHTML = `
-        <div class="col-md-3">
-            <div class="card metric-card ${criticalKPIs > 3 ? 'critical' : 'good'}">
-                <div class="card-body">
-                    <h3>${totalKPIs}</h3>
-                    <p class="mb-0">Total KPIs</p>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card metric-card ${healthColor} h-100">
+                <div class="card-body text-center">
+                    <h2 class="mb-0">${totalKPIs}</h2>
+                    <p class="mb-0 text-muted">Total KPIs</p>
+                    <small class="text-success">${goodKPIs} performing well</small>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card metric-card ${criticalKPIs > 3 ? 'critical' : 'good'}">
-                <div class="card-body">
-                    <h3>${criticalKPIs}</h3>
-                    <p class="mb-0">Critical KPIs</p>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card metric-card ${criticalKPIs > 0 ? 'critical' : 'good'} h-100">
+                <div class="card-body text-center">
+                    <h2 class="mb-0">${criticalKPIs}</h2>
+                    <p class="mb-0 text-muted">Critical KPIs</p>
+                    <small class="text-danger">${criticalKPIs} need immediate attention</small>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card metric-card good">
-                <div class="card-body">
-                    <h3>${avgHealth}%</h3>
-                    <p class="mb-0">Health Score</p>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card metric-card ${healthColor} h-100">
+                <div class="card-body text-center">
+                    <h2 class="mb-0">${healthScore}%</h2>
+                    <p class="mb-0 text-muted">Health Score</p>
+                    <div class="progress mt-2" style="height: 8px;">
+                        <div class="progress-bar bg-${healthColor === 'good' ? 'success' : healthColor === 'warning' ? 'warning' : 'danger'}" 
+                             style="width: ${healthScore}%"></div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card metric-card good">
-                <div class="card-body">
-                    <h3>${Object.keys(departments).length}</h3>
-                    <p class="mb-0">Departments</p>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card metric-card good h-100">
+                <div class="card-body text-center">
+                    <h2 class="mb-0">${Object.keys(departments).length}</h2>
+                    <p class="mb-0 text-muted">Departments</p>
+                    <small class="text-success">All departments monitored</small>
                 </div>
             </div>
         </div>
     `;
+    
+    console.log('✅ Summary cards populated');
 }
 
-// Run reasoning engine
+// =============================================================================
+// REASONING ENGINE FUNCTIONS
+// =============================================================================
 async function runReasoning() {
-    console.log('🧠 Running reasoning engine...');
-    const button = document.querySelector('button[onclick="runReasoning()"]');
-    if (!button) {
-        console.error('Reasoning button not found');
+    if (isReasoningRunning) {
+        console.log('⚠️ Reasoning already running, ignoring click');
         return;
     }
     
+    console.log('🧠 Starting reasoning engine...');
+    isReasoningRunning = true;
+    
+    const button = document.querySelector('button[onclick="runReasoning()"]');
+    const buttonOriginalHTML = button.innerHTML;
+    
+    // Update button state
     button.disabled = true;
-    button.innerHTML = '<i class="bi bi-gear"></i> Analyzing...';
+    button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Analyzing...';
+    
+    // Clear previous results
+    document.getElementById('alerts-panel').innerHTML = '<p class="text-muted">Analyzing...</p>';
+    document.getElementById('recommendations-panel').innerHTML = '<p class="text-muted">Generating insights...</p>';
+    document.getElementById('insights-panel').innerHTML = '<small class="text-muted">Processing...</small>';
     
     try {
-        const response = await fetch(`${API_BASE}/api/reasoning`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        console.log('📡 Fetching reasoning results...');
+        const response = await fetch(`${API_BASE}/api/reasoning`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
         
         const results = await response.json();
-        console.log('✅ Reasoning results:', results);
+        console.log('✅ Received reasoning results:', results);
         
-        populateAlerts(results.alerts);
-        populateRecommendations(results.recommendations);
-        populateInsights(results.insights);
+        // Populate all panels
+        populateAlerts(results.alerts || []);
+        populateRecommendations(results.recommendations || []);
+        populateInsights(results.insights || []);
+        
+        // Show success banner
+        showTemporaryBanner(`✅ Analysis complete! Found ${results.alerts?.length || 0} alerts.`, 'success');
         
     } catch (error) {
-        console.error('❌ Error running reasoning:', error);
-        alert(`Failed: ${error.message}`);
+        console.error('❌ Reasoning failed:', error);
+        showTemporaryBanner(`Analysis failed: ${error.message}`, 'danger');
+        
+        // Show error in panels
+        document.getElementById('alerts-panel').innerHTML = 
+            `<div class="alert alert-danger">Failed to analyze: ${error.message}</div>`;
+        document.getElementById('recommendations-panel').innerHTML = '';
+        document.getElementById('insights-panel').innerHTML = '';
+        
     } finally {
+        // Restore button
         button.disabled = false;
-        button.innerHTML = '<i class="bi bi-gear"></i> Run Reasoning';
+        button.innerHTML = buttonOriginalHTML;
+        isReasoningRunning = false;
+        console.log('🏁 Reasoning complete');
     }
 }
 
-// Populate alerts panel
 function populateAlerts(alerts) {
+    console.log('🚨 Populating alerts:', alerts.length);
     const panel = document.getElementById('alerts-panel');
+    
     if (!panel) return;
     
     if (!alerts || alerts.length === 0) {
-        panel.innerHTML = '<p class="text-success"><i class="bi bi-check-circle"></i> No alerts detected</p>';
-        return;
-    }
-    
-    panel.innerHTML = alerts.map(alert => `
-        <div class="alert alert-${alert.level.toLowerCase()} mb-2">
-            <strong>${alert.type}</strong><br>
-            ${alert.message}
-            <br><small class="text-muted">${new Date(alert.timestamp).toLocaleTimeString()}</small>
-        </div>
-    `).join('');
-}
-
-// Populate recommendations panel
-function populateRecommendations(recommendations) {
-    const panel = document.getElementById('recommendations-panel');
-    if (!panel) return;
-    
-    if (!recommendations || recommendations.length === 0) {
-        panel.innerHTML = '<p class="text-muted">No recommendations at this time</p>';
-        return;
-    }
-    
-    panel.innerHTML = recommendations.map(rec => `
-        <div class="recommendation-item mb-2">
-            <span class="badge bg-${rec.priority.includes('CRITICAL') ? 'danger' : 'warning'}">${rec.priority}</span><br>
-            <strong>Action:</strong> ${rec.action}<br>
-            <strong>Owner:</strong> ${rec.owner}<br>
-            <small class="text-muted">Timeline: ${rec.timeline}</small>
-        </div>
-    `).join('');
-}
-
-// Populate insights panel
-function populateInsights(insights) {
-    const panel = document.getElementById('insights-panel');
-    if (!panel) return;
-    
-    if (!insights || insights.length === 0) {
-        panel.innerHTML = '<small class="text-muted">No analysis yet. Click "Run Reasoning".</small>';
-        return;
-    }
-    
-    panel.innerHTML = insights.map(insight => 
-        `<div class="text-muted mb-1">• ${insight}</div>`
-    ).join('');
-}
-
-// Error helper
-function showError(elementId, message) {
-    const elem = document.getElementById(elementId);
-    if (elem) {
-        elem.innerHTML = `<tr><td colspan="7" class="text-danger">${message}</td></tr>`;
-    }
-}
+        panel.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle"></i> No alerts detected - all systems performing within normal parameters</div>';
+       
