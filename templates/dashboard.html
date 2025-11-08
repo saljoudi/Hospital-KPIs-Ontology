@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="alert alert-info" id="loading-message">
+    <i class="bi bi-hourglass-split"></i> Loading KPI data...
+</div>
+
+<div class="row mb-4" id="dashboard-content" style="display: none;">
+    <!-- Your existing dashboard HTML here -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Executive Summary</h5>
+                <div class="row text-center" id="summary-cards">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Hide loading message when data loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadKPIs().then(() => {
+        document.getElementById('loading-message').style.display = 'none';
+        document.getElementById('dashboard-content').style.display = 'block';
+    });
+});
+</script>
+{% endblock %}
