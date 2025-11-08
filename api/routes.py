@@ -2,35 +2,39 @@ from flask import Blueprint, jsonify, request
 from services.analytics import KPIAnalytics
 from services.reasoning_engine import HospitalKPIReasoner
 
-api_bp = Blueprint('api', __name__)
-
 def init_api(ontology):
+    '''Initialize API routes with ontology instance'''
+    api_bp = Blueprint('api', __name__)
+    
+    # Move instantiation inside the function to avoid circular imports
     analytics = KPIAnalytics(ontology)
     reasoner = HospitalKPIReasoner(ontology)
     
     @api_bp.route('/api/kpis', methods=['GET'])
     def get_kpis():
-        data = analytics.get_dashboard_data()
-        return jsonify(data.to_dict('records'))
+        '''Get all KPIs with performance data'''
+        try:
+            df = analytics.get_dashboard_data()
+            return jsonify(df.to_dict('records'))
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
     
     @api_bp.route('/api/reasoning', methods=['GET'])
     def run_reasoning():
-        results = reasoner.run_reasoning()
-        return jsonify(results)
+        '''Execute reasoning engine and return insights'''
+        try:
+            results = reasoner.run_reasoning()
+            return jsonify(results)
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
     
-    @api_bp.route('/api/kpi/<kpi_id>', methods=['GET'])
-    def get_kpi_detail(kpi_id):
-        kpi = ontology.search_one(iri=f"*{kpi_id}")
-        if not kpi:
-            return jsonify({'error': 'KPI not found'}), 404
-        
-        return jsonify({
-            'id': kpi.name,
-            'name': kpi.kpi_name,
-            'description': kpi.description,
-            'actual': kpi.actual_value,
-            'target': kpi.target_value,
-            'status': analytics._get_status(kpi)
-        })
+    @api_bp.route('/api/departments', methods=['GET'])
+    def get_departments():
+        '''Get department performance summary'''
+        try:
+            summary = analytics.get_department_summary()
+            return jsonify(summary)
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
     
     return api_bp
