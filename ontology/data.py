@@ -1,40 +1,44 @@
 from owlready2 import *
-import datetime
 from .models import create_hospital_kpi_ontology
 
 def load_kpi_data():
-    '''Load realistic hospital KPI instances'''
+    """
+    Load realistic hospital KPI instances and link them to departments, categories, and units.
+    Returns:
+        onto: A populated hospital KPI ontology.
+    """
     onto = create_hospital_kpi_ontology()
-    
+
     with onto:
-        # Time periods & units
+        # ==================== TIME PERIODS & UNITS ====================
         monthly = onto.TimePeriod("Monthly")
         weekly = onto.TimePeriod("Weekly")
         quarterly = onto.TimePeriod("Quarterly")
+
         percent = onto.Unit("Percentage")
         minutes = onto.Unit("Minutes")
         ratio = onto.Unit("Ratio")
-        
-        # Departments
-        ed = onto.EmergencyDepartment("ED")
+
+        # ==================== DEPARTMENTS ====================
+        ed = onto.EmergencyDepartment("ED_Department")
         ed.dept_name = "Emergency Department"
         ed.bed_capacity = 45
         ed.staff_count = 85
-        
-        icu = onto.ICU("ICU")
+
+        icu = onto.ICU("ICU_Department")
         icu.dept_name = "Intensive Care Unit"
         icu.bed_capacity = 24
         icu.staff_count = 60
-        
-        surgery = onto.Surgery("Surgery")
+
+        surgery = onto.Surgery("Surgery_Department")
         surgery.dept_name = "Surgery Department"
         surgery.bed_capacity = 30
         surgery.staff_count = 50
-        
-        admin = onto.HospitalAdministration("Admin")
+
+        admin = onto.HospitalAdministration("Admin_Department")
         admin.dept_name = "Hospital Administration"
-        
-        # Emergency Department KPIs
+
+        # ==================== EMERGENCY DEPARTMENT KPIs ====================
         ed_wait = onto.KPI("ED_Wait_Time")
         ed_wait.kpi_name = "Door-to-Doctor Time"
         ed_wait.description = "Average time from patient arrival to first physician contact"
@@ -48,7 +52,7 @@ def load_kpi_data():
         ed_wait.weight = 0.85
         ed_wait.has_time_period = [monthly]
         ed_wait.trend_direction = "stable"
-        
+
         ed_lwbs = onto.KPI("ED_LWBS")
         ed_lwbs.kpi_name = "Left Without Being Seen Rate"
         ed_lwbs.description = "Percentage of patients who left before being seen by provider"
@@ -62,7 +66,7 @@ def load_kpi_data():
         ed_lwbs.weight = 0.95
         ed_lwbs.has_time_period = [monthly]
         ed_lwbs.trend_direction = "up"
-        
+
         ed_mortality = onto.KPI("ED_Mortality_Rate")
         ed_mortality.kpi_name = "ED Mortality Rate"
         ed_mortality.description = "Mortality rate in emergency department"
@@ -76,8 +80,8 @@ def load_kpi_data():
         ed_mortality.weight = 0.98
         ed_mortality.has_time_period = [monthly]
         ed_mortality.trend_direction = "up"
-        
-        # ICU KPIs
+
+        # ==================== ICU KPIs ====================
         icu_clabsi = onto.KPI("ICU_CLABSI_Rate")
         icu_clabsi.kpi_name = "CLABSI Rate (per 1000 line days)"
         icu_clabsi.description = "Central Line-Associated Bloodstream Infection rate"
@@ -91,7 +95,7 @@ def load_kpi_data():
         icu_clabsi.weight = 0.94
         icu_clabsi.has_time_period = [quarterly]
         icu_clabsi.trend_direction = "up"
-        
+
         icu_occupancy = onto.KPI("ICU_Occupancy_Rate")
         icu_occupancy.kpi_name = "ICU Bed Occupancy Rate"
         icu_occupancy.description = "Percentage of ICU beds occupied"
@@ -105,8 +109,8 @@ def load_kpi_data():
         icu_occupancy.weight = 0.80
         icu_occupancy.has_time_period = [monthly]
         icu_occupancy.trend_direction = "up"
-        
-        # Surgery KPIs
+
+        # ==================== SURGERY KPIs ====================
         surgery_ssi = onto.KPI("Surgery_SSI_Rate")
         surgery_ssi.kpi_name = "Surgical Site Infection Rate"
         surgery_ssi.description = "Infections within 30 days of surgery"
@@ -120,8 +124,8 @@ def load_kpi_data():
         surgery_ssi.weight = 0.96
         surgery_ssi.has_time_period = [quarterly]
         surgery_ssi.trend_direction = "stable"
-        
-        # Admin KPIs
+
+        # ==================== ADMINISTRATION KPIs ====================
         admin_margin = onto.KPI("Hospital_Operating_Margin")
         admin_margin.kpi_name = "Operating Margin"
         admin_margin.description = "Revenue minus expenses divided by revenue"
@@ -135,7 +139,7 @@ def load_kpi_data():
         admin_margin.weight = 1.0
         admin_margin.has_time_period = [quarterly]
         admin_margin.trend_direction = "down"
-        
+
         admin_satisfaction = onto.KPI("Patient_Satisfaction_Score")
         admin_satisfaction.kpi_name = "Patient Satisfaction Score"
         admin_satisfaction.description = "Overall HCAHPS composite score"
@@ -149,7 +153,7 @@ def load_kpi_data():
         admin_satisfaction.weight = 0.92
         admin_satisfaction.has_time_period = [monthly]
         admin_satisfaction.trend_direction = "stable"
-        
+
         admin_readmission = onto.KPI("Hospital_Readmission_Rate")
         admin_readmission.kpi_name = "30-Day Readmission Rate"
         admin_readmission.description = "Percentage of patients readmitted within 30 days"
@@ -163,10 +167,10 @@ def load_kpi_data():
         admin_readmission.weight = 0.91
         admin_readmission.has_time_period = [monthly]
         admin_readmission.trend_direction = "up"
-        
-        # Relationships
+
+        # ==================== RELATIONSHIPS ====================
         ed_wait.affects = [ed_lwbs, admin_satisfaction]
         ed_lwbs.depends_on = [ed_wait]
         icu_occupancy.affects = [icu_clabsi]
-        
+
     return onto
