@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- KPI Detail Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 id="kpi-title">KPI Details</h3>
+                </div>
+                <div class="card-body" id="kpi-details">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Relationships -->
+    <div class="row">
+        <!-- Affects -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6><i class="bi bi-arrow-up-right"></i> Affects These KPIs</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group" id="affects-list">
+                        <li class="list-group-item text-muted">No downstream impact</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dependencies -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6><i class="bi bi-arrow-down-left"></i> Dependencies</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group" id="dependencies-list">
+                        <li class="list-group-item text-muted">No upstream dependencies</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <a href="/" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Load KPI detail on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const kpiId = window.location.pathname.split('/').pop();
+    loadKPIDetail(kpiId);
+});
+
+async function loadKPIDetail(kpiId) {
+    try {
+        const response = await fetch(`/api/kpi/${kpiId}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const kpi = await response.json();
+        
+        // Update title
+        document.getElementById('kpi-title').textContent = kpi.name;
+        
+        // Update details
+        document.getElementById('kpi-details').innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Description:</strong> ${kpi.description}</p>
+                    <p><strong>Department:</strong> ${kpi.department}</p>
+                    <p><strong>Category:</strong> ${kpi.category}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Actual Value:</strong> ${kpi.actual} ${kpi.unit}</p>
+                    <p><strong>Target Value:</strong> ${kpi.target} ${kpi.unit}</p>
+                    <p><strong>Status:</strong> <span class="badge status-${kpi.status}">${kpi.status.toUpperCase()}</span></p>
+                    <p><strong>Trend:</strong> <span class="trend-${kpi.trend}">${kpi.trend}</span></p>
+                </div>
+            </div>
+        `;
+        
+        // Update relationships
+        if (kpi.affected_kpis && kpi.affected_kpis.length > 0) {
+            const affectsList = kpi.affected_kpis.map(k => 
+                `<li class="list-group-item">${k.name}</li>`
+            ).join('');
+            document.getElementById('affects-list').innerHTML = affectsList;
+        }
+        
+        if (kpi.dependencies && kpi.dependencies.length > 0) {
+            const depsList = kpi.dependencies.map(k => 
+                `<li class="list-group-item">${k.name}</li>`
+            ).join('');
+            document.getElementById('dependencies-list').innerHTML = depsList;
+        }
+        
+    } catch (error) {
+        console.error('Error loading KPI details:', error);
+        document.getElementById('kpi-details').innerHTML = 
+            `<div class="alert alert-danger">Error loading KPI: ${error.message}</div>`;
+    }
+}
+</script>
+{% endblock %}
